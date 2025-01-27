@@ -1,0 +1,50 @@
+# flyctl launch added from backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/.gitignore
+# ignore most things, include some others
+backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/*
+backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/.*
+
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/bin
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/lib
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/docs
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/package.json
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/package-lock.json
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/README.md
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/CONTRIBUTING.md
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/LICENSE
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/CHANGELOG.md
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/example
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/scripts
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/tap-snapshots
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/test
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/.travis.yml
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/.gitignore
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/.gitattributes
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/coverage-map.js
+!backend/node_modules/.pnpm/minipass-sized@1.0.3/node_modules/minipass-sized/**/index.js
+
+# flyctl launch added from frontend/.gitignore
+# Logs
+frontend/**/logs
+frontend/**/*.log
+frontend/**/npm-debug.log*
+frontend/**/yarn-debug.log*
+frontend/**/yarn-error.log*
+frontend/**/pnpm-debug.log*
+frontend/**/lerna-debug.log*
+
+frontend/**/node_modules
+frontend/**/dist
+frontend/**/dist-ssr
+frontend/**/*.local
+
+# Editor directories and files
+frontend/**/.vscode/*
+!frontend/**/.vscode/extensions.json
+frontend/**/.idea
+frontend/**/.DS_Store
+frontend/**/*.suo
+frontend/**/*.ntvs*
+frontend/**/*.njsproj
+frontend/**/*.sln
+frontend/**/*.sw?
+fly.toml
