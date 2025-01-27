@@ -3,25 +3,37 @@ node_modules/
 frontend/node_modules/
 backend/node_modules/
 
-# Build files
-frontend/build/
+# Frontend build files (Vite)
+frontend/dist/
 
-# Environment variables
+# Backend environment files
 .env
 backend/.env
-frontend/.env
 
 # Python cache and virtual environments
 __pycache__/
 *.pyc
 *.pyo
 venv/
+env/
 
 # Logs and temporary files
 *.log
 *.tmp
 *.lock
+
+# SQLite database
 backend/database.sqlite
 
-# Fly.io secrets (if applicable)
+# Fly.io secrets and configuration (if applicable)
 fly.secrets
+
+# OS and IDE-specific files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Git-specific files
+*.swp
+*.swo

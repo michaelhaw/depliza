@@ -1,6 +1,15 @@
 const { spawn } = require("child_process");
 
 /**
+ * Resolves the Python executable path, defaulting to a virtual environment path if specified.
+ * @returns {string} - The path to the Python executable.
+ */
+function resolvePythonExecutable() {
+  // Check for an environment variable for the Python executable
+  return process.env.PYTHON_EXECUTABLE || "/app/venv/bin/python";
+}
+
+/**
  * Executes a Python script with the given arguments and logs its output in real time.
  * @param {string} scriptPath - Path to the Python script.
  * @param {string[]} args - Arguments to pass to the script.
@@ -8,7 +17,10 @@ const { spawn } = require("child_process");
  */
 function callPythonScript(scriptPath, args) {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn("python3", [scriptPath, ...args]);
+    const pythonExecutable = resolvePythonExecutable(); // Get the Python executable
+    console.log(`Using Python executable: ${pythonExecutable}`);
+
+    const pythonProcess = spawn(pythonExecutable, [scriptPath, ...args]);
 
     let output = "";
     let errorOutput = "";
@@ -44,4 +56,5 @@ function callPythonScript(scriptPath, args) {
 
 module.exports = {
   callPythonScript,
+  resolvePythonExecutable,
 };

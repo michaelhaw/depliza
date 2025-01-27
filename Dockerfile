@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Install Python, Git, and build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-dev build-essential git && \
+    python3 python3-pip python3-dev python3-venv build-essential git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm globally
@@ -31,20 +31,24 @@ RUN git config --global http.postBuffer 157286400
 # Clone the agent repository and checkout the main branch
 RUN git clone --depth 1 --branch main https://github.com/michaelhaw/eliza-rdai.git /eliza-rdai
 
-# Add AGENT_REPO environment variable
-ENV AGENT_REPO=eliza-rdai
-
 # Copy backend dependency files and install dependencies
 COPY backend/package.json backend/pnpm-lock.yaml ./backend/
 RUN cd backend && pnpm install
 
 # Copy backend source code and the built React frontend from the previous stage
 COPY backend ./backend
-COPY --from=build /app/frontend/build ./backend/frontend/build
+COPY --from=build /app/frontend/dist ./backend/frontend/dist
 
-# Copy scripts folder and install Python dependencies
+# Copy requirements.txt for Python dependencies
 COPY scripts/requirements.txt ./scripts/requirements.txt
-RUN pip3 install --no-cache-dir -r ./scripts/requirements.txt
+
+# Use a virtual environment for Python dependencies
+RUN python3 -m venv /app/venv && \
+    /app/venv/bin/pip install --no-cache-dir -r ./scripts/requirements.txt && \
+    ln -s /app/venv/bin/python /usr/local/bin/python-venv && \
+    ln -s /app/venv/bin/pip /usr/local/bin/pip-venv
+
+# Copy the scripts folder into the container
 COPY scripts ./scripts
 
 # Expose the backend port
@@ -52,6 +56,7 @@ EXPOSE 5000
 
 # Set environment variables for production
 ENV NODE_ENV=production
+ENV AGENT_REPO=eliza-rdai
 
 # Run the backend as a non-root user
 RUN useradd -m appuser

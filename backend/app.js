@@ -15,9 +15,9 @@ app.use(bodyParser.json());
 // Use the routes from routes.js
 app.use("/", routes);
 
-// For fly.io deployment, serve React frontend from backend
+// For Fly.io deployment, serve React frontend from backend
 if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../frontend/build");
+  const frontendPath = path.join(__dirname, "./frontend/dist");
   app.use(express.static(frontendPath));
 
   app.get("*", (req, res) => {
