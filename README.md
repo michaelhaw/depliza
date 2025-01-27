@@ -100,7 +100,7 @@ pip3 install -r requirements.txt
 
 ### 3. **Start the Application**
 
-#### **Development**
+#### **Development - Local**
 
 - **Frontend**:
   ```bash
@@ -113,13 +113,13 @@ pip3 install -r requirements.txt
   node app.js
   ```
 
-#### **Production**
+#### **Development - Docker**
 
 Build and run the Docker container:
 
 ```bash
 docker build -t depliza .
-docker run -p 5000:5000 --env-file ./backend/.env depliza
+docker run -p 5000:5000 --env-file ./backend/.env -e NODE_ENV=production depliza
 ```
 
 ---
