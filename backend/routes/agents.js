@@ -53,9 +53,9 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
 
   const flyAccessToken = process.env.FLY_ACCESS_TOKEN;
   const organization = process.env.FLY_ORGANIZATION;
-  const agentAppRoot = process.env.AGENT_APP_ROOT;
+  const agentRepo = process.env.AGENT_REPO;
 
-  if (!flyAccessToken || !organization || !agentAppRoot) {
+  if (!flyAccessToken || !organization || !agentRepo) {
     return res.status(500).json({
       error: "Server misconfiguration: Missing environment variables.",
     });
@@ -110,7 +110,7 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
 
     console.log("Starting Fly.io deployment script...");
     const deployArgs = [
-      agentAppRoot,
+      agentRepo,
       username,
       organization,
       llmModel,
