@@ -11,19 +11,64 @@ function AddAgent() {
   const [llmModel, setLlmModel] = useState("openai");
   const [llmApiKey, setLlmApiKey] = useState("");
   const [falApiKey, setFalApiKey] = useState("");
-  const [clients, setClients] = useState({ telegram: false });
+  const [clients, setClients] = useState({ telegram: false, twitter: false });
   const [telegramToken, setTelegramToken] = useState("");
+  const [twitterUsername, setTwitterUsername] = useState("");
+  const [twitterPassword, setTwitterPassword] = useState("");
+  const [twitterEmail, setTwitterEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation logic
+    const validationErrors = {};
+
+    if (!agentName.trim())
+      validationErrors.agentName = "Agent name is required.";
+    if (!llmApiKey.trim())
+      validationErrors.llmApiKey = "LLM API key is required.";
+    if (!falApiKey.trim())
+      validationErrors.falApiKey = "FAL.AI API key is required.";
+
+    if (clients.telegram && !telegramToken.trim()) {
+      validationErrors.telegramToken = "Telegram bot token is required.";
+    }
+
+    if (clients.twitter) {
+      if (!twitterUsername.trim()) {
+        validationErrors.twitterUsername = "Twitter username is required.";
+      }
+      if (!twitterPassword.trim()) {
+        validationErrors.twitterPassword = "Twitter password is required.";
+      }
+      if (!twitterEmail.trim() || !/\S+@\S+\.\S+/.test(twitterEmail)) {
+        validationErrors.twitterEmail = "A valid Twitter email is required.";
+      }
+    }
+
+    setErrors(validationErrors);
+
+    // Stop submission if there are validation errors
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     const selectedClients = {};
     if (clients.telegram) {
       selectedClients["telegram"] = telegramToken;
+    }
+    if (clients.twitter) {
+      selectedClients["twitter"] = {
+        username: twitterUsername,
+        password: twitterPassword,
+        email: twitterEmail,
+      };
     }
 
     const payload = {
@@ -75,9 +120,12 @@ function AddAgent() {
           value={agentName}
           onChange={(e) => setAgentName(e.target.value)}
           required
-          disabled={isSubmitting} // Disable input during submission
+          disabled={isSubmitting}
           className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
         />
+        {errors.agentName && (
+          <p className="text-red-500 text-sm mb-4">{errors.agentName}</p>
+        )}
 
         {/* Personality */}
         <label className="block mb-2 font-bold">Personality</label>
@@ -153,8 +201,12 @@ function AddAgent() {
           disabled={isSubmitting}
           className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
         />
+        {errors.llmApiKey && (
+          <p className="text-red-500 text-sm mb-4">{errors.llmApiKey}</p>
+        )}
 
         {/* FAL.AI API Key */}
+        <label className="block mb-2 font-bold">FAL.AI API Key</label>
         <input
           type="text"
           placeholder="FAL.AI API Key"
@@ -164,6 +216,9 @@ function AddAgent() {
           disabled={isSubmitting}
           className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
         />
+        {errors.falApiKey && (
+          <p className="text-red-500 text-sm mb-4">{errors.falApiKey}</p>
+        )}
 
         {/* Clients Section */}
         <label className="block mb-2 font-bold">Clients</label>
@@ -181,14 +236,80 @@ function AddAgent() {
             <label htmlFor="telegram">Telegram</label>
           </div>
           {clients.telegram && (
+            <>
+              <input
+                type="text"
+                placeholder="Telegram Bot Token"
+                value={telegramToken}
+                onChange={(e) => setTelegramToken(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              />
+              {errors.telegramToken && (
+                <p className="text-red-500 text-sm mb-4">
+                  {errors.telegramToken}
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Twitter */}
+          <div className="flex items-center mb-2">
             <input
-              type="text"
-              placeholder="Telegram Bot Token"
-              value={telegramToken}
-              onChange={(e) => setTelegramToken(e.target.value)}
+              type="checkbox"
+              id="twitter"
+              checked={clients.twitter}
+              onChange={() => handleClientChange("twitter")}
               disabled={isSubmitting}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              className="mr-2"
             />
+            <label htmlFor="twitter">Twitter</label>
+          </div>
+          {clients.twitter && (
+            <div>
+              <div className="flex items-center mb-4">
+                <span className="mr-2">@</span>
+                <input
+                  type="text"
+                  placeholder="Twitter Username"
+                  value={twitterUsername}
+                  onChange={(e) => setTwitterUsername(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+                />
+              </div>
+              {errors.twitterUsername && (
+                <p className="text-red-500 text-sm mb-4">
+                  {errors.twitterUsername}
+                </p>
+              )}
+              <input
+                type="password"
+                placeholder="Twitter Password"
+                value={twitterPassword}
+                onChange={(e) => setTwitterPassword(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              />
+              {errors.twitterPassword && (
+                <p className="text-red-500 text-sm mb-4">
+                  {errors.twitterPassword}
+                </p>
+              )}
+              <input
+                type="email"
+                placeholder="Twitter Account Email"
+                value={twitterEmail}
+                onChange={(e) => setTwitterEmail(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              />
+              {errors.twitterEmail && (
+                <p className="text-red-500 text-sm mb-4">
+                  {errors.twitterEmail}
+                </p>
+              )}
+            </div>
           )}
         </div>
 

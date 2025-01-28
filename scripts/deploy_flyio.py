@@ -66,9 +66,14 @@ def deploy_app(agent_repo, username, agent_name, organization, llm_model, llm_ap
         secrets["FAL_API_KEY"] = fal_api_key
 
         # Add client secrets (e.g., Telegram Bot Token)
-        for client, token in clients.items():
+        # Add client secrets (e.g., Telegram Bot Token and Twitter login details)
+        for client, details in clients.items():
             if client == "telegram":
-                secrets["TELEGRAM_BOT_TOKEN"] = token
+                secrets["TELEGRAM_BOT_TOKEN"] = details
+            elif client == "twitter":
+                secrets["TWITTER_USERNAME"] = details.get("username")
+                secrets["TWITTER_PASSWORD"] = details.get("password")
+                secrets["TWITTER_EMAIL"] = details.get("email")
 
         # Create the app on Fly.io
         create_command = ["flyctl", "apps", "create", app_name, "--org", organization]

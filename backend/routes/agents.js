@@ -89,6 +89,8 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
 
   try {
     console.log("Starting character generation script...");
+
+    const clientNames = Object.keys(clients);
     const characterGenArgs = [
       apiKey,
       agentName,
@@ -96,7 +98,7 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
       appearance,
       bodyType,
       occupation,
-      JSON.stringify(Object.keys(clients)),
+      JSON.stringify(clientNames),
       llmModel,
       username,
       agentRepo,
@@ -108,6 +110,7 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
     await callPythonScript(flyTomlScript, flyTomlArgs);
 
     console.log("Starting Fly.io deployment script...");
+
     const deployArgs = [
       agentRepo,
       username,
