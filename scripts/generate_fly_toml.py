@@ -14,7 +14,7 @@ def generate_fly_toml(username, agent_name, app_name):
 
     # Define the build args
     character_file = os.path.join("characters", username, f"{agent_name}.character.json")
-    character_dest = os.path.join(".", "characters", username)
+    character_dest = os.path.join(".", "characters", username, '')
 
     # Define the fly.toml content (unchanged structure)
     config = {
@@ -31,7 +31,7 @@ def generate_fly_toml(username, agent_name, app_name):
             "force_https": True,
             "auto_stop_machines": False,
             "auto_start_machines": True,
-            "min_machines_running": 0,
+            "min_machines_running": 1,
             "processes": ['app']
         },
         "vm": [

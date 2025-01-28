@@ -5,6 +5,7 @@ backend/node_modules/
 
 # Frontend build files (Vite)
 frontend/dist/
+backend/frontend/
 
 # Backend environment files
 .env
@@ -16,6 +17,10 @@ __pycache__/
 *.pyo
 venv/
 env/
+
+# Runtime folders
+eliza-rdai/
+users/
 
 # Logs and temporary files
 *.log
