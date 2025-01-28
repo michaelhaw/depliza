@@ -16,12 +16,9 @@ function Dashboard() {
           return;
         }
 
-        const response = await axios.get(
-          "http://localhost:5000/deployed_agents",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axios.get("/deployed_agents", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setDeployedAgents(response.data.agents);
       } catch (err) {
         setError("Failed to fetch deployed agents. Please log in again.");

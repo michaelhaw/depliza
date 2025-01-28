@@ -40,7 +40,7 @@ function AddAgent() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/deployed_agents", payload, {
+      await axios.post("/deployed_agents", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
