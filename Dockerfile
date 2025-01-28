@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Install Python, Git, and build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-dev python3-venv build-essential git && \
+    python3 python3-pip python3-dev python3-venv build-essential git curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm globally
@@ -28,8 +28,14 @@ RUN npm install -g pnpm
 # Configure Git for large repositories
 RUN git config --global http.postBuffer 157286400
 
+# Install flyctl in a custom directory
+ENV FLYCTL_INSTALL=/app/flyctl
+ENV PATH=$FLYCTL_INSTALL/bin:$PATH
+RUN curl -L https://fly.io/install.sh | sh && \
+    chmod +x $FLYCTL_INSTALL/bin/flyctl
+
 # Clone the agent repository and checkout the main branch
-RUN git clone --depth 1 --branch main https://github.com/michaelhaw/eliza-rdai.git /eliza-rdai
+RUN git clone --depth 1 --branch main https://github.com/michaelhaw/eliza-rdai.git ./eliza-rdai
 
 # Copy backend dependency files and install dependencies
 COPY backend/package.json backend/pnpm-lock.yaml ./backend/

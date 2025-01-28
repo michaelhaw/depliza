@@ -83,11 +83,9 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
     "../../scripts/deploy_flyio.py"
   );
 
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[-:T.]/g, "")
-    .slice(0, 15);
-  const appName = `${username}-${agentName}-${timestamp}`;
+  const sanitize = (input) => input.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const timestamp = new Date().toISOString().replace(/[^0-9]/g, "");
+  const appName = `${sanitize(username)}-${sanitize(agentName)}-${timestamp}`;
 
   try {
     console.log("Starting character generation script...");
@@ -101,17 +99,19 @@ router.post("/deployed_agents", authenticateToken, async (req, res) => {
       JSON.stringify(Object.keys(clients)),
       llmModel,
       username,
+      agentRepo,
     ];
     await callPythonScript(characterGenScript, characterGenArgs);
 
     console.log("Starting fly.toml generation script...");
-    const flyTomlArgs = [username, appName];
+    const flyTomlArgs = [username, agentName, appName];
     await callPythonScript(flyTomlScript, flyTomlArgs);
 
     console.log("Starting Fly.io deployment script...");
     const deployArgs = [
       agentRepo,
       username,
+      agentName,
       organization,
       llmModel,
       llmApiKey,
