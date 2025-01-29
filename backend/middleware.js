@@ -18,13 +18,19 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ error: "Unauthorized: No token provided." });
   }
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
     if (err) {
       return res
         .status(403)
         .json({ error: "Forbidden: Invalid or expired token." });
     }
-    req.user = user; // Attach user details to the request object
+
+    // Attach the user object to the request
+    req.user = {
+      id: decoded.id,
+      username: decoded.username,
+    };
+
     next();
   });
 }

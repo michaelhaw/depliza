@@ -1,36 +1,36 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./components/Login";
-import Register from "./components/Register";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Dashboard from "./components/Dashboard";
+import Login from "./components/Login";
+import AdminPanel from "./components/AdminPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AddAgent from "./components/AddAgent";
+import axios from "axios";
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get("/auth/user")
+      .then((res) => setUser(res.data))
+      .catch(() => setUser(null));
+  }, []);
+
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-agent"
-            element={
-              <ProtectedRoute>
-                <AddAgent />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route element={<ProtectedRoute user={user} />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminPanel />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/dashboard" />} />
+      </Routes>
     </Router>
   );
 }

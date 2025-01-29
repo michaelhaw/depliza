@@ -5,21 +5,27 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const response = await axios.post("/login", {
-        username,
-        password,
-      });
-      setMessage(response.data.message);
-      localStorage.setItem("token", response.data.token); // Store the JWT in localStorage
-      navigate("/dashboard"); // Redirect to the protected dashboard
+      const res = await axios.post("/login", { username, password });
+
+      if (!res.data || !res.data.token) {
+        throw new Error("Invalid response from server.");
+      }
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      navigate("/dashboard");
     } catch (err) {
-      setMessage(err.response?.data?.error || "Login failed.");
+      console.error("Login error:", err.response?.data || err.message);
+      setError(err.response?.data?.error || "Login failed. Please try again.");
     }
   };
 
@@ -30,7 +36,8 @@ function Login() {
         className="bg-white p-8 rounded-lg shadow-lg w-96"
       >
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-        {message && <p className="text-red-500 mb-4">{message}</p>}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
         <input
           type="text"
           placeholder="Username"
@@ -39,6 +46,7 @@ function Login() {
           required
           className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -47,18 +55,12 @@ function Login() {
           required
           className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+
         <button
           type="submit"
           className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
         >
           Login
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/register")}
-          className="w-full p-3 bg-gray-200 text-gray-700 rounded-lg mt-4 hover:bg-gray-300 transition"
-        >
-          Register
         </button>
       </form>
     </div>

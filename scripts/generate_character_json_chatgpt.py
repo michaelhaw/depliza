@@ -1,19 +1,108 @@
 import os
 import json
 import sys
+import time
 import openai
 from openai import OpenAI
+from jsonschema import validate, ValidationError
 
-def prompt_chatgpt_to_generate_json(api_key, agent_name, personality, appearance, body_type, occupation, clients, model_provider):
+CHARACTER_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "clients": {"type": "array", "items": {"type": "string"}},
+        "modelProvider": {"type": "string"},
+        "imageModelProvider": {"type": "string"},
+        "settings": {
+            "type": "object",
+            "properties": {
+                "voice": {
+                    "type": "object",
+                    "properties": {"model": {"type": "string"}},
+                    "required": ["model"],
+                }
+            },
+            "required": ["voice"],
+        },
+        "plugins": {"type": "array"},
+        "bio": {"type": "array", "items": {"type": "string"}},
+        "lore": {"type": "array", "items": {"type": "string"}},
+        "knowledge": {"type": "array", "items": {"type": "string"}},
+        "messageExamples": {"type": "array"},
+        "postExamples": {"type": "array", "items": {"type": "string"}},
+        "topics": {"type": "array", "items": {"type": "string"}},
+        "style": {
+            "type": "object",
+            "properties": {
+                "all": {"type": "array", "items": {"type": "string"}},
+                "chat": {"type": "array", "items": {"type": "string"}},
+                "post": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["all", "chat", "post"],
+        },
+        "adjectives": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": [
+        "name",
+        "clients",
+        "modelProvider",
+        "imageModelProvider",
+        "settings",
+        "bio",
+        "lore",
+        "knowledge",
+        "messageExamples",
+        "postExamples",
+        "topics",
+        "style",
+        "adjectives",
+    ],
+}
+
+def validate_json_structure(json_content):
     """
-    Sends a prompt to ChatGPT to generate a character JSON file based on the inputs.
+    Validates the generated JSON structure using the defined schema.
     """
-    # Create the OpenAI client
+    try:
+        validate(instance=json_content, schema=CHARACTER_JSON_SCHEMA)
+        return True, None
+    except ValidationError as e:
+        return False, str(e)
+
+
+def prompt_chatgpt_to_generate_json(api_key, agent_name, personality, appearance, body_type, occupation, clients, model_provider, max_retries=3):
+    """
+    Sends a prompt to ChatGPT to generate a character JSON file.
+    Includes reinforcement techniques to ensure better compliance.
+    """
     client = OpenAI(api_key=api_key)
 
-    # Construct the prompt
+    # Define a more structured and explicit prompt
     prompt = f"""
-    Create a JSON file for a fictional character with the following structure:
+    You are an AI assistant that generates JSON files in a strictly defined format.
+    
+    Your task: Generate a JSON object representing a fictional AI character. The JSON **must** follow this schema exactly:
+    
+    {json.dumps(CHARACTER_JSON_SCHEMA, indent=4)}
+    
+    **Rules:**
+    - Ensure all required fields are present and contain valid, non-null values.
+    - Do NOT wrap the response in any formatting (e.g., ```json).
+    - Do NOT add extra fields beyond those specified in the schema.
+    - Maintain correct data types (strings for text, arrays for lists).
+    - The following fields and contexts are fixed based on the following values:
+        - name: "{agent_name}"
+        - clients: {clients}
+        - modelProvider: "{model_provider}"
+        - imageModelProvider: "falai"
+        - settings.voice.model: "en_US-female-medium"
+        - Context: 
+            - personality={personality}
+            - appearance={appearance}
+            - body type={body_type}
+            - occupation={occupation}
+
+    **Example Template with instructions:**
     {{
         "name": "{agent_name}",
         "clients": {clients},
@@ -45,160 +134,115 @@ def prompt_chatgpt_to_generate_json(api_key, agent_name, personality, appearance
                 {{
                     "user": "{agent_name}",
                     "content": {{
-                        "text": "Write a creative and engaging reply in the style of their personality."
-                    }}
-                }}
-            ],
-            [
-                {{
-                    "user": "{{{{user1}}}}",
-                    "content": {{
-                        "text": "What’s your latest project?"
-                    }}
-                }},
-                {{
-                    "user": "{agent_name}",
-                    "content": {{
-                        "text": "Explain what they’re working on using {occupation} skills and their personality."
+                        "text": "A creative and engaging reply."
                     }}
                 }}
             ]
         ],
-        "postExamples": [
-            "Create short social media-style posts reflecting their personality and interests."
-        ],
-        "topics": [
-            "List a few topics they enjoy discussing."
-        ],
+        "postExamples": ["Short social media-style posts reflecting their personality and interests."],
+        "topics": ["List of few topics they enjoy discussing."],
         "style": {{
-            "all": [
-                "Provide a list of one-word adjectives describing the overall style, e.g., friendly, witty."
-            ],
-            "chat": [
-                "Provide a list of one-word adjectives describing the style used in chat."
-            ],
-            "post": [
-                "Provide a list of one-word adjectives describing the style used in posts."
-            ]
+            "all": ["Provide a list of one-word adjectives describing the overall style based on personality, e.g., friendly, witty."],
+            "chat": ["Provide a list of one-word adjectives describing the style used in chat based on personality."],
+            "post": ["Provide a list of one-word adjectives describing the style used in posts based on personality."]
         }},
-        "adjectives": [
-            "List some personality traits."
-        ]
+        "adjectives": ["List some personality traits based on overall personality."]
     }}
-    Ensure the JSON is well-formed, creative, and adheres to the described structure.
+
+    **Self-Verification Task:**  
+    After generating the JSON, **check your own output**:
+    - Ensure all fields match the expected schema.
+    - Validate all required properties exist.
+    - Confirm no extra fields were included.
+    
+    If you detect an issue, **regenerate the JSON correctly** before outputting it.
+    
+    **Final Task:** Output only the **raw JSON** with no explanation.
     """
 
-    # Send the prompt to ChatGPT
-    try:
-        completion = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            store=True,
-        )
-
-        # Extract the content of the response
-        raw_content = completion.choices[0].message.content
-
-        # Remove any code block markers (` ```json `) if present
-        if raw_content.startswith("```json"):
-            raw_content = raw_content.strip("```json").strip("```")
-        return raw_content
-
-    except openai.APIConnectionError as e:
-        print("Error: The server could not be reached.")
-        print(e.__cause__)
-    except openai.RateLimitError as e:
-        print("Error: Rate limit exceeded. Please back off and try again later.")
-    except openai.APIStatusError as e:
-        print(f"Error: Received a non-200 status code: {e.status_code}")
-        print(e.response)
-    except Exception as e:
-        print("An unexpected error occurred:")
-        print(e)
-
-    return None
-
-def save_json_to_file(json_content, agent_repo, username, agent_name):
-    """
-    Saves the generated JSON content to <project root>/users/<username>/<agentName>.character.json
-    and prints the parsed JSON to the console.
-    """
-    # Get the project root by going up from the script's directory
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    # Derive the agent_app_root (path to the agent repository)
-    agent_app_root = os.path.join(project_root, agent_repo)
-    
-    # Define the characters directory within the agent repository
-    characters_dir = os.path.join(agent_app_root, "characters", username)
-    
-    # Ensure the directory exists
-    os.makedirs(characters_dir, exist_ok=True)
-
-    # Define the output file path
-    output_file = os.path.join(characters_dir, f"{agent_name}.character.json")
-
-    try:
-        # Parse and pretty-print the JSON
-        parsed_json = json.loads(json_content)
-        
-        # Print the parsed JSON to the console
-        print("\nGenerated Character JSON:")
-        print(json.dumps(parsed_json, indent=4))
-        
-        # Save the JSON to a file
-        with open(output_file, "w") as f:
-            json.dump(parsed_json, f, indent=4)
-        print(f"Character JSON has been saved to {output_file}")
-    except json.JSONDecodeError as e:
-        error_message = f"Error parsing the JSON response: {e}"
-        print(error_message)
-        raise ValueError(error_message)
-    except Exception as e:
-        error_message = f"Error saving the JSON file: {e}"
-        print(error_message)
-        raise RuntimeError(error_message)
-    
-
-if __name__ == "__main__":
-    try:
-        # Validate command-line arguments
-        if len(sys.argv) != 11:
-            raise ValueError(
-                "Usage: python generate_character_json_chatgpt.py <apiKey> <agentName> <personality> <appearance> <bodyType> <occupation> <clients> <modelProvider> <username> <agentRepo>"
+    retries = 0
+    while retries < max_retries:
+        try:
+            completion = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a JSON generation assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                store=True,
             )
 
-        # Extract inputs from command-line arguments
-        api_key = sys.argv[1]
-        agent_name = sys.argv[2]
-        personality = sys.argv[3]
-        appearance = sys.argv[4]
-        body_type = sys.argv[5]
-        occupation = sys.argv[6]
-        clients = sys.argv[7]  # This should be passed as a JSON-formatted string, e.g., '["telegram", "discord"]'
-        model_provider = sys.argv[8]
-        username = sys.argv[9]
-        agent_repo = sys.argv[10]
+            raw_content = completion.choices[0].message.content
 
-        # Convert clients string to a proper Python list
-        try:
-            clients_list = json.loads(clients)
-            if not isinstance(clients_list, list):
-                raise ValueError("Clients must be a JSON-formatted array (e.g., '[\"telegram\", \"discord\"]').")
-        except json.JSONDecodeError:
-            raise ValueError("Clients argument must be a JSON-formatted array (e.g., '[\"telegram\", \"discord\"]').")
+            # Remove formatting if present (e.g., ```json code block)
+            if raw_content.startswith("```json"):
+                raw_content = raw_content.strip("```json").strip("```")
 
-        # Prompt ChatGPT to generate the JSON
-        print(f"Prompting ChatGPT to create a character JSON for '{agent_name}'...")
-        chatgpt_response = prompt_chatgpt_to_generate_json(api_key, agent_name, personality, appearance, body_type, occupation, clients, model_provider)
+            parsed_json = json.loads(raw_content)
 
-        if chatgpt_response:
-            save_json_to_file(chatgpt_response, agent_repo, username, agent_name)
-        else:
-            raise RuntimeError("Failed to generate a character JSON from ChatGPT.")
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1) 
+            # Validate JSON structure
+            is_valid, error_msg = validate_json_structure(parsed_json)
+            if is_valid:
+                return raw_content
+            else:
+                print(f"⚠️ Invalid JSON format detected. Retrying... ({retries + 1}/{max_retries})")
+                retries += 1
+
+        except Exception as e:
+            print(f"❌ Error generating JSON: {e}")
+            retries += 1
+
+    print("❌ Failed to generate a valid JSON after retries.")
+    return None
+
+
+def save_json_to_file(json_content, agent_repo, agent_name):
+    """
+    Saves the generated JSON content if it passes validation.
+    """
+    try:
+        # Ensure it's valid JSON
+        parsed_json = json.loads(json_content)
+        print("\nGenerated Character JSON:")
+        print(json.dumps(parsed_json, indent=4))
+    except json.JSONDecodeError as e:
+        print(f"❌ Error parsing JSON: {e}")
+        return False
+
+    # Validate against schema
+    is_valid, error_msg = validate_json_structure(parsed_json)
+    if not is_valid:
+        print(f"❌ JSON Validation Error: {error_msg}")
+        return False
+
+    # Define file path
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    agent_app_root = os.path.join(project_root, agent_repo)
+    characters_dir = os.path.join(agent_app_root, "characters")
+    os.makedirs(characters_dir, exist_ok=True)
+    output_file = os.path.join(characters_dir, f"{agent_name}.character.json")
+
+    # Save to file
+    with open(output_file, "w") as f:
+        json.dump(parsed_json, f, indent=4)
+    print(f"✅ Character JSON saved: {output_file}")
+
+    return True
+
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 10:
+        raise ValueError("Usage: python generate_character_json_chatgpt.py <apiKey> <agentName> <personality> <appearance> <bodyType> <occupation> <clients> <modelProvider> <agentRepo>")
+
+    api_key, agent_name, personality, appearance, body_type, occupation, clients, model_provider, agent_repo = sys.argv[1:]
+
+    clients_list = json.loads(clients)
+    
+    print(f"Generating character JSON for '{agent_name}'...")
+    chatgpt_response = prompt_chatgpt_to_generate_json(api_key, agent_name, personality, appearance, body_type, occupation, clients_list, model_provider)
+
+    if chatgpt_response:
+        save_json_to_file(chatgpt_response, agent_repo, agent_name)
+    else:
+        raise RuntimeError("Failed to generate character JSON.")

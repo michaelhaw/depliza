@@ -20,7 +20,7 @@ env/
 
 # Runtime folders
 eliza-rdai/
-users/
+config/
 
 # Logs and temporary files
 *.log
@@ -28,7 +28,7 @@ users/
 *.lock
 
 # SQLite database
-backend/database.sqlite
+backend/database.db
 
 # Fly.io secrets and configuration (if applicable)
 fly.secrets

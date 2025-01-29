@@ -2,21 +2,17 @@ import os
 import sys
 import toml
 
-def generate_fly_toml(username, agent_name, app_name):
+def generate_fly_toml(agent_name, app_name):
     """
-    Generate the fly.toml file for the given username and app name.
-    The file will be saved in: ../users/<username>/fly.toml
+    Generate the fly.toml file for the main AI Agent.
     """
-    # Define the directory for the user
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    user_dir = os.path.join(project_root, "users", username)
-    os.makedirs(user_dir, exist_ok=True)
+    config_dir = os.path.join(project_root, "config")
+    os.makedirs(config_dir, exist_ok=True)
 
-    # Define the build args
-    character_file = os.path.join("characters", username, f"{agent_name}.character.json")
-    character_dest = os.path.join(".", "characters", username, '')
+    character_file = os.path.join("characters", f"{agent_name}.character.json")
+    character_dest = os.path.join(".", "characters", '')
 
-    # Define the fly.toml content (unchanged structure)
     config = {
         "app": app_name,
         "primary_region": 'sjc',
@@ -34,45 +30,20 @@ def generate_fly_toml(username, agent_name, app_name):
             "min_machines_running": 1,
             "processes": ['app']
         },
-        "vm": [
-            {
-                "memory": '2gb',
-                "cpu_kind": 'shared',
-                "cpus": 2,
-            }
-        ]
+        "vm": [{"memory": '2gb', "cpu_kind": 'shared', "cpus": 2}]
     }
 
-    # Save the fly.toml file in the user directory
-    fly_toml_path = os.path.join(user_dir, "fly.toml")
+    fly_toml_path = os.path.join(config_dir, "fly.toml")
     try:
         with open(fly_toml_path, "w") as file:
             toml.dump(config, file)
-        print(f"fly.toml file generated successfully for app: {app_name}")
-        print(f"File saved at: {fly_toml_path}")
+        print(f"fly.toml saved at: {fly_toml_path}")
     except Exception as e:
-        error_message = f"Error writing fly.toml file: {e}"
-        print(error_message)
-        raise RuntimeError(error_message)
-
+        raise RuntimeError(f"Error writing fly.toml: {e}")
 
 if __name__ == "__main__":
-    try:
-        if len(sys.argv) != 4:
-            raise ValueError("Usage: python generate_fly_toml.py <username> <agent_name> <app_name>")
+    if len(sys.argv) != 3:
+        raise ValueError("Usage: python generate_fly_toml.py <agent_name> <app_name>")
 
-        username = sys.argv[1]
-        agent_name = sys.argv[2]
-        app_name = sys.argv[3]
-
-        if not username.strip() or not agent_name.strip() or not app_name.strip():
-            raise ValueError("username, agent_name and app_name must be provided and non-empty.")
-
-        # Generate the fly.toml file
-        generate_fly_toml(username, agent_name, app_name)
-    except ValueError as ve:
-        print(f"Input Error: {ve}")
-        sys.exit(1)
-    except RuntimeError as re:
-        print(f"Runtime Error: {re}")
-        sys.exit(1)
+    agent_name, app_name = sys.argv[1:]
+    generate_fly_toml(agent_name, app_name)
