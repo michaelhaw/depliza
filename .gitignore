@@ -19,7 +19,7 @@ venv/
 env/
 
 # Runtime folders
-eliza-rdai/
+# eliza-rdai/ # Now merged agent repo into app
 config/
 
 # Logs and temporary files

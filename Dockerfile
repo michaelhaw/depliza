@@ -35,7 +35,11 @@ RUN curl -L https://fly.io/install.sh | sh && \
     chmod +x $FLYCTL_INSTALL/bin/flyctl
 
 # Clone the agent repository and checkout the main branch
-RUN git clone --depth 1 --branch revert https://github.com/michaelhaw/eliza-rdai.git ./eliza-rdai
+# [Feat] agent repository is now merged into depliza repo, no need to clone
+# RUN git clone --depth 1 --branch revert https://github.com/michaelhaw/eliza-rdai.git ./eliza-rdai
+
+# Copy the agent repository folder into the container
+COPY eliza-rdai ./eliza-rdai
 
 # Copy backend dependency files and install dependencies
 COPY backend/package.json backend/pnpm-lock.yaml ./backend/
