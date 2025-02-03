@@ -70,7 +70,7 @@ AGENT_REPO=eliza-rdai
 ### 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/username/depliza.git
+git clone https://github.com/Project-Zetta/depliza.git
 cd depliza
 ```
 
