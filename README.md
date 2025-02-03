@@ -191,7 +191,7 @@ fly secrets set "OPENAI_API_KEY=your_openai_api_key"
 ### 3. Deploy App
 
 ```
-fly deploy
+fly deploy --config fly.toml
 ```
 
 ---
