@@ -226,6 +226,10 @@ router.post("/config/save", authenticateToken, async (req, res) => {
     }
 
     // ✅ Save JSON file
+    if (!fs.existsSync(CHARACTER_JSON_DIR)) {
+      console.log(`Creating Character JSON Directory at ${CHARACTER_JSON_DIR}`);
+      fs.mkdirSync(CHARACTER_JSON_DIR, { recursive: true });
+    }
     fs.writeFileSync(CHARACTER_JSON_FILE, JSON.stringify(parsedJson, null, 2));
     console.log(`✅ Character JSON saved at ${CHARACTER_JSON_FILE}`);
 
