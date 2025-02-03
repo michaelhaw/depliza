@@ -167,6 +167,37 @@ pip3 install -r requirements.txt
 
 ---
 
+## **Deploy to Fly.io**
+
+### 1. Initialize Fly App
+
+From app root (i.e. `.../depliza`) \*Must be authenticated with fly.io
+
+```bash
+fly launch [-o org_name]
+```
+
+Copy existing fly.toml config to new fly app (Select y when prompted to use app defaults)
+
+### 2. Set Fly Secrets
+
+Set the required environment variables as Fly App Secrets, see [Environment Variables](#environment-variables)
+
+```bash
+fly secrets set SECRET_KEY=jwt_secret_key
+fly secrets set FLY_ORGANIZATION=your_flyio_organization
+fly secrets set FLY_ACCESS_TOKEN=your_flyio_access_token
+fly secrets set OPENAI_API_KEY=your_openai_api_key
+```
+
+### 3. Deploy App
+
+```
+fly deploy
+```
+
+---
+
 ## **Project Structure**
 
 ```
