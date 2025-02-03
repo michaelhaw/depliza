@@ -1,6 +1,6 @@
 # **Depliza**
 
-Depliza is a full-stack web application designed to deploy and manage AI-powered agents seamlessly. It leverages modern web technologies for its frontend and backend, integrates with powerful APIs for character generation and deployment, and supports containerized deployment using Docker and Fly.io.
+Depliza is a full-stack web application designed to deploy and manage an AI-powered agent seamlessly. It leverages modern web technologies for its frontend and backend, integrates with powerful APIs for character generation and deployment, and supports containerized deployment using Docker and Fly.io.
 
 This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)** repository to power the AI agent's behavior and functionality, enabling highly customizable and interactive agent configurations.
 
@@ -11,14 +11,14 @@ This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)
 ### **Frontend**
 
 - Built with **React** and styled using **TailwindCSS**.
-- User-friendly UI for managing deployed agents.
-- Dynamic forms for adding agents with configurable options like:
+- User-friendly UI for managing the deployed agent.
+- Dynamic forms for deploying an agent with configurable options like:
   - Personality
   - Appearance
   - Body Type
   - Occupation
-  - API Keys (LLM and FAL.AI)
-  - Client integrations (e.g., Telegram).
+  - API Keys (OpenAI, Anthropic, and FAL.AI)
+  - Client integrations (e.g., Telegram, Twitter).
 - Secure login and registration system using JWT authentication.
 
 ### **Backend**
@@ -26,7 +26,7 @@ This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)
 - Powered by **Express.js** and **better-sqlite3** for lightweight and fast database operations.
 - Features include:
   - **User authentication**: JWT-based middleware for protected routes.
-  - **Agent management**: Add, retrieve, and manage deployed agents.
+  - **Agent management**: Configure and deploy agent.
   - Integration with Python scripts for:
     - Generating agent configurations (JSON) using OpenAI's ChatGPT.
     - Creating Fly.io configuration files (`fly.toml`).
@@ -37,7 +37,7 @@ This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)
 
 - Fully containerized with **Docker**.
 - Integrated with **Fly.io** for hosting and scaling.
-- Supports secret management for deployment, including API keys and tokens.
+- Supports secret management for agent deployment, including API keys and tokens.
 
 ---
 
@@ -50,22 +50,29 @@ This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)
 - **Docker** and **Docker Compose**
 - Fly.io CLI
 - Git
+- pnpm
 
 ### **Environment Variables**
 
-Create a `.env` file in the `backend` directory with the following:
+Copy the `.env.example` file in the `backend` directory and rename to `.env`. Fill in the following mandatory values for production:
 
 ```env
 SECRET_KEY=your_jwt_secret_key
 FLY_ORGANIZATION=your_flyio_organization
 FLY_ACCESS_TOKEN=your_flyio_access_token
 OPENAI_API_KEY=your_openai_api_key
-AGENT_REPO=eliza-rdai
+```
+
+The following values need to be configured for local development (non-Docker):
+
+```env
+NODE_ENV=production # If you wish to serve the frontend from the backend
+PYTHON_EXECUTABLE=path_to_your_python_executable # Example: /home/usr/venv/bin/python
 ```
 
 ---
 
-## **Setup Instructions**
+## **Setup Instructions - Quick Start (Docker)**
 
 ### 1. **Clone the Repository**
 
@@ -74,7 +81,44 @@ git clone https://github.com/Project-Zetta/depliza.git
 cd depliza
 ```
 
-### 2. **Install Dependencies**
+### 2. **Copy env file**
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Fill in the required values from [Environment Variables](#environment-variables)
+
+### 3. **Build and run Docker the container**
+
+```bash
+cd ..
+docker build -t depliza .
+docker run -p 5000:5000 --env-file ./backend/.env depliza
+```
+
+---
+
+## **Setup Instructions - Local Development (non-Docker)**
+
+### 1. **Clone the Repository**
+
+```bash
+git clone https://github.com/Project-Zetta/depliza.git
+cd depliza
+```
+
+### 2. **Copy env file**
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Fill in the required values from [Environment Variables](#environment-variables)
+
+### 3. **Install Dependencies**
 
 #### **Frontend**
 
@@ -98,9 +142,9 @@ cd ../scripts
 pip3 install -r requirements.txt
 ```
 
-### 3. **Start the Application**
+### 4. **Start the Application**
 
-#### **Development - Local**
+#### **Frontend and Backend as separate process**
 
 - **Frontend**:
   ```bash
@@ -113,14 +157,13 @@ pip3 install -r requirements.txt
   node app.js
   ```
 
-#### **Development - Docker**
+#### **Frontend served by backend (frontend build automatically copies to backend)**
 
-Build and run the Docker container:
-
-```bash
-docker build -t depliza .
-docker run -p 5000:5000 --env-file ./backend/.env -e NODE_ENV=production depliza
-```
+- **Backend**:
+  ```bash
+  cd backend
+  node app.js
+  ```
 
 ---
 
@@ -131,16 +174,17 @@ project-root/
 ├── backend/
 │   ├── app.js             # Backend entry point
 │   ├── routes/            # API route definitions
+│   ├── util/              # Utility functions
 │   ├── middleware.js      # JWT and middleware logic
 │   ├── db.js              # SQLite database initialization
 │   └── .env               # Environment variables
 ├── frontend/
 │   ├── src/
-│   ├── build/             # React build output
+│   ├── dist/               # Vite React build output
 │   ├── package.json
 │   └── tailwind.config.js
 ├── scripts/
-│   ├── generate_character_json_chatgpt.py
+│   ├── generate_character_json_chatgpt_stdout.py
 │   ├── generate_fly_toml.py
 │   ├── deploy_flyio.py
 │   └── requirements.txt   # Python dependencies
@@ -156,17 +200,21 @@ project-root/
 
 ### **Authentication**
 
-| Method | Endpoint    | Description              |
-| ------ | ----------- | ------------------------ |
-| POST   | `/register` | Register a new user      |
-| POST   | `/login`    | Log in and get JWT token |
+| Method | Endpoint | Description              |
+| ------ | -------- | ------------------------ |
+| POST   | `/login` | Log in and get JWT token |
+| POST   | `/user`  | Get logged in user       |
 
 ### **Deployed Agents**
 
-| Method | Endpoint           | Description                            |
-| ------ | ------------------ | -------------------------------------- |
-| GET    | `/deployed_agents` | Retrieve deployed agents (protected)   |
-| POST   | `/deployed_agents` | Add and deploy a new agent (protected) |
+| Method | Endpoint                 | Description                                    |
+| ------ | ------------------------ | ---------------------------------------------- |
+| GET    | `/deployed_agent`        | Retrieve deployed agents (protected)           |
+| GET    | `/config`                | Retrieve current agent config (protected)      |
+| POST   | `/config/character_json` | Generate character json (protected)            |
+| GET    | `/config/character_json` | Fetch saved character json (protected)         |
+| POST   | `/config/save`           | Save agent config (protected)                  |
+| POST   | `/config/deploy`         | Deploy agent based on saved config (protected) |
 
 ---
 
@@ -174,8 +222,8 @@ project-root/
 
 ### **Python Scripts**
 
-- **`generate_character_json_chatgpt.py`**:
-  - Generates a JSON configuration for an agent using OpenAI's ChatGPT API.
+- **`generate_character_json_chatgpt_stdout.py`**:
+  - Generates a JSON configuration for an agent using OpenAI's ChatGPT API and output to console for retrieval.
 - **`generate_fly_toml.py`**:
   - Creates a Fly.io configuration file (`fly.toml`) for the agent.
 - **`deploy_flyio.py`**:
@@ -185,21 +233,24 @@ project-root/
 
 ## **Deployment Workflow**
 
-1. Add an agent using the frontend UI.
-2. The backend:
-   - Calls `generate_character_json_chatgpt.py` to generate the agent’s JSON file.
+1. Configure an agent using the frontend UI.
+   - Calls `generate_character_json_chatgpt_stdout.py` to generate the agent’s JSON file.
+2. Save Config:
+   - Saves the character JSON into a file.
+   - Saves other config values to database.
+3. Deploy Agent:
    - Calls `generate_fly_toml.py` to generate the Fly.io configuration.
    - Calls `deploy_flyio.py` to deploy the agent to Fly.io.
-3. The agent is live and ready to interact with the configured clients (e.g., Telegram).
+4. The agent is live and ready to interact with the configured clients (e.g., Telegram, Twitter).
 
 ---
 
 ## **Future Features**
 
-- Support for additional LLM models (e.g., Claude).
-- More client integrations beyond Telegram.
+- Support for additional LLM models (e.g., Gemini, Deepseek, etc.).
+- More client integrations beyond Telegram and Twitter.
 - Enhanced UI for agent management.
-- Monitoring and analytics for deployed agents.
+- Monitoring and analytics for deployed agent.
 
 ---
 
