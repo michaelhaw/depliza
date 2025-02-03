@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-  const [deployedAgent, setDeployedAgent] = useState([]);
+  const [deployedAgent, setDeployedAgent] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -19,14 +19,16 @@ function Dashboard() {
         const response = await axios.get("/deployed_agent", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.data || !response.data.agent) {
-          throw new Error("Invalid response from server");
-        }
 
-        setDeployedAgent(response.data.agent);
+        if (response.data.agent) {
+          setDeployedAgent(response.data.agent);
+        }
       } catch (err) {
-        console.error("API error:", err.message);
-        localStorage.removeItem("token");
+        if (err.response.status === 404) {
+          setDeployedAgent(null);
+        } else {
+          console.error("API error:", err.message);
+        }
       }
     };
 
@@ -62,9 +64,7 @@ function Dashboard() {
 
         {error && <p className="text-red-500">{error}</p>}
 
-        {!deployedAgent ? (
-          <p>No deployed agent found.</p>
-        ) : (
+        {deployedAgent ? (
           <ul className="space-y-4">
             <li
               key={deployedAgent.id}
@@ -77,6 +77,8 @@ function Dashboard() {
               </p>
             </li>
           </ul>
+        ) : (
+          <p className="text-gray-500">No deployed agent found.</p>
         )}
       </div>
     </div>

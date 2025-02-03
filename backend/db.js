@@ -82,6 +82,6 @@ function seedDefaultAgent() {
 
 // 🔹 Run seed functions
 seedDefaultUser();
-seedDefaultAgent();
+//seedDefaultAgent();
 
 module.exports = db;

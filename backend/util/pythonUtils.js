@@ -54,7 +54,42 @@ function callPythonScript(scriptPath, args) {
   });
 }
 
+function callPythonScriptJson(scriptPath, args = []) {
+  return new Promise((resolve, reject) => {
+    const pythonExecutable = resolvePythonExecutable(); // Get the Python executable
+    console.log(`Using Python executable: ${pythonExecutable}`);
+
+    const pythonProcess = spawn(pythonExecutable, [scriptPath, ...args]);
+
+    let output = "";
+    let errorOutput = "";
+
+    pythonProcess.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    pythonProcess.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    pythonProcess.on("close", (code) => {
+      if (code === 0) {
+        try {
+          // ✅ Ensure output is a valid JSON response
+          const parsedOutput = JSON.parse(output);
+          resolve(parsedOutput);
+        } catch (error) {
+          reject(`❌ JSON Parse Error: ${error.message}`);
+        }
+      } else {
+        reject(`❌ Python Script Error: ${errorOutput}`);
+      }
+    });
+  });
+}
+
 module.exports = {
   callPythonScript,
+  callPythonScriptJson,
   resolvePythonExecutable,
 };
