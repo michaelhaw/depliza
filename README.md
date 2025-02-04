@@ -95,7 +95,7 @@ Fill in the required values from [Environment Variables](#environment-variables)
 ```bash
 cd ..
 docker build -t depliza .
-docker run -p 5000:5000 --env-file ./backend/.env depliza
+docker run -p 5000:5000 --env-file .env depliza
 ```
 
 ---
