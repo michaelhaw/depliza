@@ -184,7 +184,7 @@ fly volumes create app_data --size 50 --app depliza
 
 Select y and choose volume region
 
-### 2. Set Fly Secrets
+### 3. Set Fly Secrets
 
 Set the required environment variables as Fly App Secrets, see [Environment Variables](#environment-variables)
 
@@ -193,7 +193,7 @@ fly secrets set "DEPLIZA_SECRET_KEY=jwt_secret_key"
 fly secrets set "DEPLIZA_OPENAI_API_KEY=your_openai_api_key"
 ```
 
-### 3. Deploy App
+### 4. Deploy App
 
 ```
 fly deploy --config fly.toml
