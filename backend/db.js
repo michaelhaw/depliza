@@ -1,38 +1,54 @@
+require("dotenv").config({ path: process.env.DOTENV_PATH || ".env" });
 const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 
 const db = new Database("database.db");
 
-// 🔹 Ensure a clean database every build
-db.exec("DROP TABLE IF EXISTS users;");
-db.exec("DROP TABLE IF EXISTS ai_agent;");
-
 // 🔹 Create users table
 db.exec(`
-  CREATE TABLE users (
+  CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
   );
 `);
 
-// 🔹 Create AI Agent config table (Singleton)
+// 🔹 Create AI Agent config table (Singleton Config File)
 db.exec(`
-  CREATE TABLE ai_agent (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
+  CREATE TABLE IF NOT EXISTS agent_config (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    openai_api_key TEXT DEFAULT NULL,
+    fal_api_key TEXT DEFAULT NULL,
+    telegram_token TEXT DEFAULT NULL,
+    telegram_enabled BOOLEAN DEFAULT FALSE,
+    twitter_username TEXT DEFAULT NULL,
+    twitter_password TEXT DEFAULT NULL,
+    twitter_email TEXT DEFAULT NULL,
+    twitter_enabled BOOLEAN DEFAULT FALSE,
+    first_run BOOLEAN DEFAULT TRUE
+  );
+`);
+
+// 🔹 Ensure an Entry Always Exists
+const existingConfig = db
+  .prepare("SELECT COUNT(*) AS count FROM agent_config")
+  .get();
+if (existingConfig.count === 0) {
+  db.prepare(
+    `
+    INSERT INTO agent_config (id, openai_api_key, fal_api_key, telegram_token, telegram_enabled, twitter_username, twitter_password, twitter_email, twitter_enabled, first_run)
+    VALUES (1, NULL, NULL, NULL, FALSE, NULL, NULL, NULL, FALSE, TRUE)
+  `
+  ).run();
+  console.log("✅ Default agent_config entry created.");
+}
+
+// 🔹 Create Deployed Agent table (Tracks last deployed agent)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS deployed_agent (
+    id INTEGER PRIMARY KEY DEFAULT 1,
     agent_name TEXT NOT NULL,
-    personality TEXT NOT NULL,
-    appearance TEXT NOT NULL,
-    body_type TEXT NOT NULL,
-    occupation TEXT NOT NULL,
-    llm_model TEXT NOT NULL,
-    llm_api_key TEXT DEFAULT '',
-    fal_api_key TEXT DEFAULT '',
-    telegram_token TEXT DEFAULT '',
-    twitter_username TEXT DEFAULT '',
-    twitter_password TEXT DEFAULT '',
-    twitter_email TEXT DEFAULT '',
-    deployed_at TEXT DEFAULT NULL
+    deployed_at TEXT NOT NULL
   );
 `);
 
@@ -41,47 +57,49 @@ function seedDefaultUser() {
   const defaultUsername = process.env.DEFAULT_ADMIN_USERNAME || "admin";
   const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || "degenwaifu";
 
-  const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
-  db.prepare("INSERT INTO users (username, password) VALUES (?, ?)").run(
-    defaultUsername,
-    hashedPassword
-  );
-  console.log(`🚀 Default admin user created: ${defaultUsername}`);
+  const existingUser = db
+    .prepare("SELECT username FROM users WHERE username = ?")
+    .get(defaultUsername);
+
+  if (!existingUser) {
+    const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+    db.prepare("INSERT INTO users (username, password) VALUES (?, ?)").run(
+      defaultUsername,
+      hashedPassword
+    );
+    console.log(`🚀 Default admin user created: ${defaultUsername}`);
+  } else {
+    console.log(
+      `✅ User '${defaultUsername}' already exists. Skipping creation.`
+    );
+  }
 }
 
-// 🔹 Function to seed a default AI agent
-function seedDefaultAgent() {
-  console.log("⚠️ Seeding default AI agent...");
+// 🔹 Function to set environment variables from agent_config
+function loadAgentConfig() {
+  const stmt = db.prepare("SELECT * FROM agent_config WHERE id = 1");
+  const config = stmt.get();
 
-  const insertAgent = db.prepare(`
-    INSERT INTO ai_agent (
-      id, agent_name, personality, appearance, body_type, occupation,
-      llm_model, llm_api_key, fal_api_key, telegram_token,
-      twitter_username, twitter_password, twitter_email, deployed_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-  `);
+  if (config) {
+    if (config.openai_api_key)
+      process.env.OPENAI_API_KEY = config.openai_api_key;
+    if (config.fal_api_key) process.env.FALAI_API_KEY = config.fal_api_key;
+    if (config.telegram_token)
+      process.env.TELEGRAM_BOT_TOKEN = config.telegram_token;
+    if (config.twitter_username)
+      process.env.TWITTER_USERNAME = config.twitter_username;
+    if (config.twitter_password)
+      process.env.TWITTER_PASSWORD = config.twitter_password;
+    if (config.twitter_email) process.env.TWITTER_EMAIL = config.twitter_email;
 
-  insertAgent.run(
-    1,
-    "MainAgent", // Default AI agent name
-    "sweet_caring", // Default personality
-    "blonde", // Default appearance
-    "slim", // Default body type
-    "graphics_designer", // Default occupation
-    "openai", // Default LLM model
-    "", // llm_api_key (empty initially)
-    "", // fal_api_key (empty initially)
-    "", // telegram_token (empty)
-    "", // twitter_username (empty)
-    "", // twitter_password (empty)
-    "" // twitter_email (empty)
-  );
-
-  console.log("✅ Default AI agent created successfully.");
+    console.log("✅ Environment variables set from database.");
+  } else {
+    console.log("⚠️ No agent configuration found in database.");
+  }
 }
 
 // 🔹 Run seed functions
 seedDefaultUser();
-//seedDefaultAgent();
+loadAgentConfig();
 
 module.exports = db;

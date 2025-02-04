@@ -8,6 +8,10 @@ primary_region = 'sjc'
 
 [build]
 
+[mounts]
+  source = "app_data"
+  destination = "/app"
+
 [http_service]
   internal_port = 5000
   force_https = true
@@ -17,6 +21,7 @@ primary_region = 'sjc'
   processes = ['app']
 
 [[vm]]
-  memory = '2gb'
-  cpu_kind = 'shared'
-  cpus = 1
+  size = 'performance-4x'
+  memory = '16gb'
+  cpu_kind = 'performance'
+  cpus = 4

@@ -47,20 +47,18 @@ This project integrates the **[Eliza AI Agent](https://github.com/elizaOS/eliza)
 
 - **Node.js** (v23.3.0 or later)
 - **Python** (v3.8+)
-- **Docker** and **Docker Compose**
+- **Docker**
 - Fly.io CLI
 - Git
 - pnpm
 
 ### **Environment Variables**
 
-Copy the `.env.example` file in the `backend` directory and rename to `.env`. Fill in the following mandatory values for production:
+Copy the `.env.example` and rename to `.env`. Fill in the following mandatory values for production:
 
 ```env
-SECRET_KEY=your_jwt_secret_key
-FLY_ORGANIZATION=your_flyio_organization
-FLY_ACCESS_TOKEN=your_flyio_access_token
-OPENAI_API_KEY=your_openai_api_key
+DEPLIZA_SECRET_KEY=your_jwt_secret_key
+DEPLIZA_OPENAI_API_KEY=your_openai_api_key
 ```
 
 The following values need to be configured for local development (non-Docker):
@@ -84,7 +82,6 @@ cd depliza
 ### 2. **Copy env file**
 
 ```bash
-cd backend
 cp .env.example .env
 ```
 
@@ -95,7 +92,7 @@ Fill in the required values from [Environment Variables](#environment-variables)
 ```bash
 cd ..
 docker build -t depliza .
-docker run -p 5000:5000 --env-file .env depliza
+docker run -p 5000:5000 -p 3000:3000 --env-file .env depliza
 ```
 
 ---
@@ -109,10 +106,9 @@ git clone https://github.com/Project-Zetta/depliza.git
 cd depliza
 ```
 
-### 2. **Copy env file**
+### 2. **Copy depliza env file**
 
 ```bash
-cd backend
 cp .env.example .env
 ```
 
@@ -133,6 +129,9 @@ pnpm run build
 ```bash
 cd ../backend
 pnpm install
+# Handles bindings file error
+cd node_modules/better-sqlite3
+pnpm run build-release
 ```
 
 #### **Scripts**
@@ -177,15 +176,21 @@ From app root (i.e. `.../depliza`) \*Must be authenticated with fly.io
 fly apps create depliza [-o org_name]
 ```
 
+### 2. Create Persistent Volume
+
+```bash
+fly volumes create app_data --size 50 --app depliza
+```
+
+Select y and choose volume region
+
 ### 2. Set Fly Secrets
 
 Set the required environment variables as Fly App Secrets, see [Environment Variables](#environment-variables)
 
 ```bash
-fly secrets set "SECRET_KEY=jwt_secret_key"
-fly secrets set "FLY_ORGANIZATION=your_flyio_organization"
-fly secrets set "FLY_ACCESS_TOKEN=your_flyio_access_token"
-fly secrets set "OPENAI_API_KEY=your_openai_api_key"
+fly secrets set "DEPLIZA_SECRET_KEY=jwt_secret_key"
+fly secrets set "DEPLIZA_OPENAI_API_KEY=your_openai_api_key"
 ```
 
 ### 3. Deploy App

@@ -48,3 +48,4 @@ frontend/**/*.njsproj
 frontend/**/*.sln
 frontend/**/*.sw?
 fly.toml
+backend/database.db

@@ -8,32 +8,24 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDeployedAgent = async () => {
+    async function fetchDeployedAgent() {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("No token found, redirecting to login.");
-          return navigate("/login");
-        }
-
         const response = await axios.get("/deployed_agent", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.data.agent) {
-          setDeployedAgent(response.data.agent);
+        if (response.data.success) {
+          setDeployedAgent(response.data.deployed_agent);
+        } else {
+          setError("⚠️ No deployed agent found.");
         }
       } catch (err) {
-        if (err.response.status === 404) {
-          setDeployedAgent(null);
-        } else {
-          console.error("API error:", err.message);
-        }
+        setError("⚠️ No deployed agent found.");
       }
-    };
-
+    }
     fetchDeployedAgent();
-  }, [navigate]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -62,8 +54,6 @@ function Dashboard() {
 
         <h3 className="text-xl font-semibold mb-4">Your Deployed Agent</h3>
 
-        {error && <p className="text-red-500">{error}</p>}
-
         {deployedAgent ? (
           <ul className="space-y-4">
             <li
@@ -78,7 +68,7 @@ function Dashboard() {
             </li>
           </ul>
         ) : (
-          <p className="text-gray-500">No deployed agent found.</p>
+          <p className="text-gray-500">{error}</p>
         )}
       </div>
     </div>
