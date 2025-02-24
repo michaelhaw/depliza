@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import CharacterForm from "./CharacterForm";
 
 function AdminPanel() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ function AdminPanel() {
 
   // 🔹 State for Character JSON Editing
   const [jsonText, setJsonText] = useState("");
+  const [charJson, setCharJson] = useState({});
 
   // UI States
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +67,8 @@ function AdminPanel() {
 
         if (response.data.success) {
           setJsonText(JSON.stringify(response.data.characterJson, null, 2));
+          // Test JSON Form
+          setCharJson(response.data.characterJson);
         }
       } catch (err) {
         console.error("Error fetching character JSON:", err);
@@ -72,6 +76,47 @@ function AdminPanel() {
     }
     fetchCharacterJson();
   }, [refresh]);
+
+  // 🔹 Handle Save Character Configuration Form
+  const handleJSONFormSubmit = async (data) => {
+    console.log("Character JSON Data:", data);
+    // Send `data` to the backend or process it
+    const characterJsonString = JSON.stringify(data, null, 2);
+    if (!characterJsonString.trim()) {
+      setStatusMessage("❌ Cannot save an empty JSON.");
+      return;
+    }
+
+    setIsLoading(true);
+    setStatusMessage("Saving Character JSON...");
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        "/agent/character/save",
+        { characterJson: characterJsonString },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        setStatusMessage("✅ Character JSON saved successfully!");
+      } else {
+        setStatusMessage("❌ Failed to save Character JSON.");
+      }
+
+      setTimeout(() => {
+        setRefresh((prev) => !prev);
+      }, 1000);
+    } catch (err) {
+      console.error("❌ Error saving JSON:", err);
+      setStatusMessage("❌ Failed to save Character JSON.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 🔹 Handle Generate Character JSON
   const handleGenerateJson = async () => {
@@ -105,6 +150,7 @@ function AdminPanel() {
 
       if (response.data.success) {
         setJsonText(JSON.stringify(response.data.characterJson, null, 2));
+        setCharJson(response.data.characterJson);
         setStatusMessage("✅ Character JSON generated successfully!");
       } else {
         setStatusMessage("❌ Failed to generate Character JSON.");
@@ -275,7 +321,8 @@ function AdminPanel() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
+    <div className="flex justify-center h-screen bg-gray-100">
+      <CharacterForm existingData={charJson} onSubmit={handleJSONFormSubmit} />
       <form className="bg-white p-8 rounded-lg shadow-lg w-full max-w-6xl">
         <h2 className="text-2xl font-bold mb-6 text-center">
           Zetta AI Agent Config

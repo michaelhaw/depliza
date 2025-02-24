@@ -65,4 +65,4 @@ function validateCharJsonStructure(jsonContent) {
   }
 }
 
-module.exports = { validateCharJsonStructure };
+module.exports = { CHARACTER_JSON_SCHEMA, validateCharJsonStructure };

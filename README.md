@@ -148,7 +148,7 @@ pip3 install -r requirements.txt
 - **Frontend**:
   ```bash
   cd frontend
-  pnpm start
+  pnpm vite
   ```
 - **Backend**:
   ```bash
